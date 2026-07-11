@@ -1,0 +1,16 @@
+VENDOR PAYMENT POLICY - V1.2
+Effective Date: 2023-11-01
+
+1. Invoice Submission
+All vendor invoices must be submitted within 30 days of service completion. Invoices should include a detailed description of services, date of service, and work order number.
+
+2. Payment Terms
+Standard payment terms are Net 30 days from the invoice date. Expedited payments must be pre-approved by the Property Manager or Regional Director.
+
+3. Overdue Invoices
+- 31-45 Days Overdue: Accounts Payable (AP) sends an automated reminder to the vendor and notifies the Operations Coordinator.
+- 46-60 Days Overdue: Operations Coordinator reviews the invoice history, contacts the vendor for resolution, and flags the invoice for Property Manager review.
+- 61+ Days Overdue: Property Manager reviews, potentially escalates to Regional Director for resolution, and considers temporary suspension of vendor services if no resolution is reached.
+
+4. Invoice Disputes
+Any disputed invoices must be reported to Accounts Payable within 10 days of receipt. Disputes should include clear reasons and supporting documentation.
