@@ -1,0 +1,280 @@
+{
+  "mode": "ai",
+  "project_title": "Real Estate Escalation Triage RAG Assistant",
+  "short_description": "A beginner-friendly Retrieval-Augmented Generation (RAG) project designed to help real estate operations teams quickly triage and understand escalation scenarios based on internal policies and incident reports. Utilizes local document embedding, vector search, and a locally-runnable Large Language Model (LLM) for context-aware responses.",
+  "domain_summary": "Real estate operations frequently deal with incidents requiring escalation, such as critical maintenance failures, tenant disputes, lease violations, or vendor issues. Timely and accurate triage is crucial to mitigate risks, ensure tenant satisfaction, and maintain property value. This project aims to centralize internal knowledge documents (e.g., escalation matrices, policy manuals) and provide an AI assistant to guide operations staff on appropriate actions and urgency levels for various incidents.",
+  "user_persona": "Property Manager Assistant or Junior Operations Coordinator: A new or entry-level team member who needs quick, reliable information on how to handle specific real estate operational escalations, understand company policies, and determine appropriate next steps without extensive senior oversight or manual policy lookup.",
+  "architecture_notes": [
+    "This architecture is chosen for its beginner-friendliness and ease of local setup. The React frontend provides a clear UI. FastAPI is a lightweight and performant web framework. ChromaDB offers a simple, embeddable vector store perfect for local development without needing a separate database server. Ollama enables running open-source LLMs locally, reducing dependency on external APIs and providing a hands-on experience with LLMs. The `all-MiniLM-L6-v2` embedding model is small, fast, and performs well for semantic search tasks on a CPU. This setup demonstrates a complete RAG flow with minimal infrastructure complexity, making it ideal for learning and local development."
+  ],
+  "backend_modules": [
+    "main.py: FastAPI application entry point, defines routes and orchestrates RAG pipeline.",
+    "api/v1/documents.py: Endpoints for document management (upload, list, delete). Handles file parsing and ingestion into ChromaDB.",
+    "api/v1/query.py: Endpoint for processing user queries. Orchestrates retrieval from ChromaDB and interaction with the LLM.",
+    "services/rag_pipeline.py: Core RAG logic: initializes embedding model, ChromaDB, and LLM client; contains methods for document embedding, retrieval, and LLM query generation.",
+    "models/schema.py: Pydantic models for request/response validation (e.g., QueryRequest, QueryResponse, DocumentUploadResponse)."
+  ],
+  "frontend_features": [
+    "Document Upload Area: Drag-and-drop or file input for uploading PDF/TXT policy documents.",
+    "Uploaded Documents List: Displays names of currently indexed documents.",
+    "Chat Interface: Text input for user queries.",
+    "Response Display Area: Shows the AI's generated response, clearly indicating if context was retrieved.",
+    "Loading Indicators: Visual feedback during document processing and query execution.",
+    "Clear Chat Button: Resets the conversation history."
+  ],
+  "data_sources": [
+    "User-uploaded PDF or TXT files containing real estate operational policies, escalation matrices, incident reports, and standard operating procedures (SOPs)."
+  ],
+  "testing_strategy": [
+    "Unit Tests (Pytest): For individual backend functions (e.g., document parsing, embedding generation, ChromaDB interactions, LLM client calls).",
+    "Integration Tests: Test API endpoints (e.g., POST /api/v1/documents/upload, POST /api/v1/query) to ensure backend modules work together correctly.",
+    "End-to-End Tests (Playwright/Cypress - optional for beginner): Simulate user flow from document upload to querying and validating AI responses in the UI.",
+    "RAG Evaluation: Manual review of query responses against expected outcomes, especially for critical escalation scenarios, to ensure accuracy and relevance of retrieved context."
+  ],
+  "starter_questions": [
+    "How do I escalate a critical water leak affecting multiple units?",
+    "What is the procedure for handling a repeated noise complaint against a tenant?",
+    "A vendor invoice is overdue by 60 days, what's the next step?",
+    "What forms are needed to initiate an eviction process for lease violation?",
+    "What are the emergency contact protocols for a major power outage in a property?"
+  ],
+  "workflow_steps": [
+    "1. Setup Environment: User installs Docker, Ollama, and project dependencies.",
+    "2. Start Services: User runs `docker compose up` to start backend, frontend, and Ollama.",
+    "3. Access UI: User navigates to `localhost:3000` (or configured frontend port).",
+    "4. Document Ingestion: User uploads relevant policy documents (e.g., PDF of 'Escalation Matrix v3.1', 'Tenant Handbook 2024', 'Vendor Payment Policy').",
+    "5. Indexing: Backend processes documents: parses text, generates embeddings, and stores them in ChromaDB.",
+    "6. User Query: User types a question into the chat interface (e.g., 'What's the process for a major HVAC breakdown?').",
+    "7. Retrieval: Backend receives query, generates embedding, performs a similarity search in ChromaDB to find top-k relevant document chunks.",
+    "8. LLM Interaction: Backend constructs a prompt with the user's query and the retrieved document context, sends it to the local Ollama LLM."
+  ],
+  "business_rules": [
+    "Maximum document size for upload is 10MB.",
+    "Only PDF and TXT file types are accepted for document ingestion.",
+    "If the RAG system cannot find sufficiently relevant information (similarity score below a threshold) for a user query, the LLM should clearly state that it lacks information on the topic and suggest uploading more relevant documents.",
+    "LLM responses should be concise and actionable, focusing on the 'next steps' or 'who to contact' where applicable, as per the persona's needs.",
+    "Automatically identify and highlight keywords related to 'escalation level' (e.g., Critical, Urgent, Standard) in the LLM's response if inferred from the retrieved context.",
+    "All document processing (embedding generation) should occur asynchronously to not block the UI during uploads."
+  ],
+  "sample_documents": [
+    {
+      "filename": "Escalation_Matrix_v3.1.pdf",
+      "content": "REAL ESTATE OPERATIONS ESCALATION MATRIX - V3.1\nEffective Date: 2024-03-15\n\n1. Critical Escalations (Priority 1 - Immediate Action Required)\n   - Definition: Incidents posing significant risk to life, property, or legal compliance. Requires resolution within 2 hours.\n   - Examples: Major water leaks (affecting multiple units/structure), fire, gas leaks, complete power outage, security breach, severe structural damage.\n   - Action: Notify Property Manager immediately, contact emergency services (if applicable), dispatch emergency vendor, document incident fully.\n   - Responsible: Property Manager, Regional Director\n\n2. Urgent Escalations (Priority 2 - Same-Day Resolution)\n   - Definition: Incidents significantly impacting tenant comfort or property functionality. Requires resolution within 24 hours.\n   - Examples: HVAC failure in extreme weather, single unit water leak (contained), unsecure entry point, critical appliance failure.\n   - Action: Create urgent work order, contact preferred vendor, follow up hourly.\n   - Responsible: Operations Coordinator, Property Manager\n\n3. Standard Escalations (Priority 3 - Within 3 Business Days)\n   - Definition: Routine maintenance or tenant issues requiring attention but not immediate danger.\n   - Examples: Minor plumbing issues, non-critical appliance repair, pest control, noise complaints (first instance).\n   - Action: Schedule routine vendor visit, communicate with tenant.\n   - Responsible: Operations Coordinator\n\n4. Legal & Compliance Escalations (Priority 1-3 based on severity)\n   - Definition: Lease violations, legal notices, tenant disputes requiring legal counsel.\n   - Action: Consult Legal Department, document all communications, follow legal guidelines.\n   - Responsible: Property Manager, Legal Counsel"
+    },
+    {
+      "filename": "Tenant_Handbook_2024.pdf",
+      "content": "TENANT HANDBOOK - 2024 Edition\nWelcome to your new home!\n\nChapter 7: Maintenance and Repairs\n\n7.1 Reporting Maintenance Issues\nAll maintenance requests must be submitted via our online portal. For non-emergency requests, please allow 24-48 hours for a response. Ensure you provide clear descriptions and photos.\n\n7.2 Emergency Maintenance\nFor true emergencies (e.g., active water leak, no heat in winter, electrical fire), call our 24/7 emergency line immediately at 555-0100. This number is for emergencies only.\n\nChapter 9: Lease Violations\n\n9.1 Noise Complaints\n- First Instance: Verbal warning, documented in tenant file.\n- Second Instance: Written warning, potential fine.\n- Third Instance (or severe disruption): Notice to Cure or Quit, potential eviction proceedings.\n\n9.2 Unauthorized Alterations\nTenants are prohibited from making alterations to the property without prior written consent. Unauthorized alterations may result in charges for restoration and/or lease termination.\n\n9.3 Pet Policy Violations\nUnauthorized pets will result in a warning and a fine. Continued violation may lead to eviction."
+    },
+    {
+      "filename": "Vendor_Payment_Policy_v1.2.txt",
+      "content": "VENDOR PAYMENT POLICY - V1.2\nEffective Date: 2023-11-01\n\n1. Invoice Submission\nAll vendor invoices must be submitted within 30 days of service completion. Invoices should include a detailed description of services, date of service, and work order number.\n\n2. Payment Terms\nStandard payment terms are Net 30 days from the invoice date. Expedited payments must be pre-approved by the Property Manager or Regional Director.\n\n3. Overdue Invoices\n- 31-45 Days Overdue: Accounts Payable (AP) sends an automated reminder to the vendor and notifies the Operations Coordinator.\n- 46-60 Days Overdue: Operations Coordinator reviews the invoice history, contacts the vendor for resolution, and flags the invoice for Property Manager review.\n- 61+ Days Overdue: Property Manager reviews, potentially escalates to Regional Director for resolution, and considers temporary suspension of vendor services if no resolution is reached.\n\n4. Invoice Disputes\nAny disputed invoices must be reported to Accounts Payable within 10 days of receipt. Disputes should include clear reasons and supporting documentation."
+    },
+    {
+      "filename": "Storm_Damage_Protocol.pdf",
+      "content": "STORM DAMAGE PROTOCOL - 2024 Annual Review\n\n1. Immediate Safety Assessment\n   - Upon discovery of storm damage, ensure the area is safe. Cordon off hazardous zones.\n   - Contact emergency services if life-threatening (e.g., downed power lines, severe structural collapse).\n\n2. Documentation\n   - Take comprehensive photos and videos of all damage.\n   - Log incident details: date, time, type of storm, extent of damage, affected areas.\n\n3. Emergency Repairs\n   - Arrange for temporary fixes to prevent further damage (e.g., tarping roofs, boarding up broken windows).\n   - Use pre-approved emergency vendors only.\n\n4. Insurance Claim Initiation\n   - Notify the company's insurance provider within 24 hours for major damage, 48 hours for minor damage.\n   - Property Manager to submit claim form with all documentation.\n   - Track claim progress regularly.\n\n5. Tenant Communication\n   - Inform affected tenants about damage status, repair timelines, and any necessary relocation support."
+    }
+  ],
+  "tool_catalog": [
+    {
+      "name": "retrieval_tool",
+      "description": "Retrieves relevant document chunks from the vector database based on a semantic search of the user's query. Provides contextual information for the LLM."
+    }
+  ],
+  "agent_plan": [
+    {
+      "name": "Architecture Agent",
+      "role": "Define app boundaries, data flow, runtime stack, and integration points.",
+      "outputs": [
+        "This architecture is chosen for its beginner-friendliness and ease of local setup. The React frontend provides a clear UI. FastAPI is a lightweight and performant web framework. ChromaDB offers a simple, embeddable vector store perfect for local development without needing a separate database server. Ollama enables running open-source LLMs locally, reducing dependency on external APIs and providing a hands-on experience with LLMs. The `all-MiniLM-L6-v2` embedding model is small, fast, and performs well for semantic search tasks on a CPU. This setup demonstrates a complete RAG flow with minimal infrastructure complexity, making it ideal for learning and local development."
+      ]
+    },
+    {
+      "name": "Backend Agent",
+      "role": "Design FastAPI modules, service contracts, validation, and error handling.",
+      "outputs": [
+        "main.py: FastAPI application entry point, defines routes and orchestrates RAG pipeline.",
+        "api/v1/documents.py: Endpoints for document management (upload, list, delete). Handles file parsing and ingestion into ChromaDB.",
+        "api/v1/query.py: Endpoint for processing user queries. Orchestrates retrieval from ChromaDB and interaction with the LLM.",
+        "services/rag_pipeline.py: Core RAG logic: initializes embedding model, ChromaDB, and LLM client; contains methods for document embedding, retrieval, and LLM query generation.",
+        "models/schema.py: Pydantic models for request/response validation (e.g., QueryRequest, QueryResponse, DocumentUploadResponse)."
+      ]
+    },
+    {
+      "name": "Frontend Agent",
+      "role": "Design React screens, state flow, controls, and user feedback states.",
+      "outputs": [
+        "Document Upload Area: Drag-and-drop or file input for uploading PDF/TXT policy documents.",
+        "Uploaded Documents List: Displays names of currently indexed documents.",
+        "Chat Interface: Text input for user queries.",
+        "Response Display Area: Shows the AI's generated response, clearly indicating if context was retrieved.",
+        "Loading Indicators: Visual feedback during document processing and query execution.",
+        "Clear Chat Button: Resets the conversation history."
+      ]
+    },
+    {
+      "name": "Database Agent",
+      "role": "Design persistence models, sample data, indexes, and audit records.",
+      "outputs": [
+        "Run history",
+        "Source document metadata",
+        "Generated workflow audit records"
+      ]
+    },
+    {
+      "name": "Testing Agent",
+      "role": "Define contract tests, smoke tests, and generated project validation.",
+      "outputs": [
+        "Unit Tests (Pytest): For individual backend functions (e.g., document parsing, embedding generation, ChromaDB interactions, LLM client calls).",
+        "Integration Tests: Test API endpoints (e.g., POST /api/v1/documents/upload, POST /api/v1/query) to ensure backend modules work together correctly.",
+        "End-to-End Tests (Playwright/Cypress - optional for beginner): Simulate user flow from document upload to querying and validating AI responses in the UI.",
+        "RAG Evaluation: Manual review of query responses against expected outcomes, especially for critical escalation scenarios, to ensure accuracy and relevance of retrieved context."
+      ]
+    },
+    {
+      "name": "DevOps Agent",
+      "role": "Define environment variables, Docker workflow, and repository packaging.",
+      "outputs": [
+        "Docker-ready project",
+        "Environment sample file",
+        "GitHub repository upload"
+      ]
+    },
+    {
+      "name": "Reviewer Agent",
+      "role": "Review the generated plan for completeness, security, and portfolio quality.",
+      "outputs": [
+        "1. Setup Environment: User installs Docker, Ollama, and project dependencies.",
+        "2. Start Services: User runs `docker compose up` to start backend, frontend, and Ollama.",
+        "3. Access UI: User navigates to `localhost:3000` (or configured frontend port).",
+        "4. Document Ingestion: User uploads relevant policy documents (e.g., PDF of 'Escalation Matrix v3.1', 'Tenant Handbook 2024', 'Vendor Payment Policy').",
+        "5. Indexing: Backend processes documents: parses text, generates embeddings, and stores them in ChromaDB.",
+        "6. User Query: User types a question into the chat interface (e.g., 'What's the process for a major HVAC breakdown?')."
+      ]
+    }
+  ],
+  "model_provider": "gemini",
+  "model_name": "gemini-2.5-flash",
+  "fallback_reason": "OpenAI limit reached. Automatically switched to Gemini.",
+  "architecture": "Real Estate Policy Assistant",
+  "architecture_template_id": 41,
+  "architecture_template_path": "templates/simple-rag/real-estate-policy-assistant",
+  "architecture_description": "Real Estate Policy Assistant for lease and property policy lookup.",
+  "architecture_version": "1.0",
+  "architecture_origin": "built_in",
+  "architecture_quality_score": 100,
+  "architecture_evolution_notes": "",
+  "architecture_technology": null,
+  "architecture_source_version": null,
+  "validation_pipeline": [
+    "pytest",
+    "npm install",
+    "npm run build",
+    "docker compose config",
+    "docker compose build"
+  ],
+  "problem_statement": "Build a portfolio-ready Simple RAG application for Real Estate Operations Escalation Triage Simple RAG - Beginner Custom 18 that returns explainable answers with sources and timeline evidence.",
+  "target_users": [
+    "Students",
+    "Junior developers",
+    "Portfolio reviewers",
+    "Interviewers"
+  ],
+  "functional_requirements": [
+    "Accept a user question or task from the React UI.",
+    "Validate request shape and reject empty input.",
+    "Execute the Simple RAG workflow with observable timeline steps.",
+    "Return answer, cited sources, timeline, and project metadata.",
+    "Persist each run for debugging, demos, and interview explanation."
+  ],
+  "non_functional_requirements": [
+    "Keep local deterministic fallback behavior so the repo runs without paid API keys.",
+    "Avoid logging secrets or raw provider credentials.",
+    "Keep API responses stable enough for frontend and tests.",
+    "Support Docker-based local deployment and PostgreSQL production storage.",
+    "Keep generated documentation accurate enough for portfolio review."
+  ],
+  "entities": [
+    "RunLog",
+    "SourceDocument",
+    "RetrievedChunk",
+    "TimelineStep",
+    "EmbeddingRecord",
+    "VectorCollection"
+  ],
+  "database_tables": [
+    "run_logs",
+    "source_documents",
+    "retrieved_chunks",
+    "timeline_steps"
+  ],
+  "api_endpoints": [
+    {
+      "method": "GET",
+      "path": "/api/health",
+      "purpose": "Health check for deployment and monitoring."
+    },
+    {
+      "method": "POST",
+      "path": "/api/ask",
+      "purpose": "Run the Simple RAG workflow for a user question."
+    },
+    {
+      "method": "GET",
+      "path": "/api/runs",
+      "purpose": "Return recent stored run logs for review and debugging."
+    }
+  ],
+  "workflows": [
+    "1. Setup Environment: User installs Docker, Ollama, and project dependencies.",
+    "2. Start Services: User runs `docker compose up` to start backend, frontend, and Ollama.",
+    "3. Access UI: User navigates to `localhost:3000` (or configured frontend port).",
+    "4. Document Ingestion: User uploads relevant policy documents (e.g., PDF of 'Escalation Matrix v3.1', 'Tenant Handbook 2024', 'Vendor Payment Policy').",
+    "5. Indexing: Backend processes documents: parses text, generates embeddings, and stores them in ChromaDB.",
+    "6. User Query: User types a question into the chat interface (e.g., 'What's the process for a major HVAC breakdown?').",
+    "7. Retrieval: Backend receives query, generates embedding, performs a similarity search in ChromaDB to find top-k relevant document chunks.",
+    "8. LLM Interaction: Backend constructs a prompt with the user's query and the retrieved document context, sends it to the local Ollama LLM."
+  ],
+  "architecture_components": [
+    "React frontend",
+    "FastAPI backend",
+    "Pipeline service",
+    "Vector/search service",
+    "SQL database",
+    "Optional LLM provider"
+  ],
+  "sequence_flows": [
+    "Main ask flow",
+    "RAG retrieval flow",
+    "Agent execution flow",
+    "Provider fallback flow"
+  ],
+  "security_controls": [
+    "Input validation",
+    "CORS allowlist",
+    "Secret-only environment variables",
+    "Safe logging",
+    "Rate limiting recommendation"
+  ],
+  "scalability_plan": [
+    "Move long runs to a queue",
+    "Use PostgreSQL in production",
+    "Use managed vector DB when data grows",
+    "Cache repeated retrievals",
+    "Add metrics and traces"
+  ],
+  "interview_topics": [
+    "Problem statement",
+    "Architecture layers",
+    "DFD levels",
+    "Database schema",
+    "API contract",
+    "Security",
+    "Scaling"
+  ],
+  "documentation_quality_pipeline": [
+    "enrich_blueprint",
+    "write_design_docs",
+    "validate_required_docs",
+    "qa_score_before_push"
+  ]
+}
